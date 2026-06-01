@@ -1,0 +1,113 @@
+name: Build WorldGenRender
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build three jars
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Build runtime, API and resources jars
+        run: ./gradlew clean build --no-daemon
+
+      - name: Verify exactly three release jars
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          jars=(build/libs/*.jar)
+          printf 'Built jars:\n'
+          printf ' - %s\n' "${jars[@]}"
+
+          runtime=(build/libs/worldgenrender-*.jar)
+          api=(build/libs/worldgenrender-*-api.jar)
+          resources=(build/libs/worldgenrender-*-resources.jar)
+
+          runtime_filtered=()
+          for jar in "${runtime[@]}"; do
+            case "$jar" in
+              *-api.jar|*-resources.jar) ;;
+              *) runtime_filtered+=("$jar") ;;
+            esac
+          done
+
+          if [ "${#runtime_filtered[@]}" -ne 1 ]; then
+            echo "Expected exactly one runtime mod jar, found ${#runtime_filtered[@]}" >&2
+            exit 1
+          fi
+          if [ "${#api[@]}" -ne 1 ]; then
+            echo "Expected exactly one API jar, found ${#api[@]}" >&2
+            exit 1
+          fi
+          if [ "${#resources[@]}" -ne 1 ]; then
+            echo "Expected exactly one resources jar, found ${#resources[@]}" >&2
+            exit 1
+          fi
+
+          jar tf "${runtime_filtered[0]}" | grep -q 'META-INF/mods.toml'
+          jar tf "${runtime_filtered[0]}" | grep -q 'cn/xianaldai/worldgenrender/WorldGenRender.class'
+          jar tf "${api[0]}" | grep -q 'cn/xianaldai/worldgenrender/api/WorldGenRenderApi.class'
+          jar tf "${api[0]}" | grep -q 'cn/xianaldai/worldgenrender/api/WorldGenRenderApi.java'
+          jar tf "${api[0]}" | grep -q 'META-INF/worldgenrender/docs/API.md'
+          jar tf "${resources[0]}" | grep -q 'docs/COMMANDS.md'
+          jar tf "${resources[0]}" | grep -q 'docs/MCMOD_DESCRIPTION.md'
+          jar tf "${resources[0]}" | grep -q 'javadoc/index.html'
+
+      - name: Upload runtime mod jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: worldgenrender-runtime-mod
+          path: |
+            build/libs/worldgenrender-*.jar
+            !build/libs/worldgenrender-*-api.jar
+            !build/libs/worldgenrender-*-resources.jar
+          if-no-files-found: error
+
+      - name: Upload API jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: worldgenrender-api
+          path: build/libs/worldgenrender-*-api.jar
+          if-no-files-found: error
+
+      - name: Upload resources jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: worldgenrender-resources
+          path: build/libs/worldgenrender-*-resources.jar
+          if-no-files-found: error
+
+      - name: Publish GitHub release assets
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/libs/worldgenrender-*.jar

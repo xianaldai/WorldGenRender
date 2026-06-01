@@ -16,8 +16,10 @@ base {
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 java {
-    withSourcesJar()
-    withJavadocJar()
+    // 产物工作流固定为三个 Jar：
+    // 1. 主运行 Mod Jar：worldgenrender-<version>.jar
+    // 2. API Jar：worldgenrender-<version>-api.jar
+    // 3. 资源/文档 Jar：worldgenrender-<version>-resources.jar
 }
 
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
@@ -193,13 +195,78 @@ tasks.named('jar', Jar).configure {
 //     dependsOn 'reobfJar'
 // }
 
+tasks.register('apiJar', Jar) {
+    group = 'build'
+    description = 'Assembles the WorldGenRender public API jar.'
+    archiveClassifier = 'api'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from(sourceSets.main.output) {
+        include 'cn/xianaldai/worldgenrender/api/**'
+    }
+    from(sourceSets.main.allJava) {
+        include 'cn/xianaldai/worldgenrender/api/**'
+    }
+    from('API.md') {
+        into 'META-INF/worldgenrender/docs'
+    }
+    manifest {
+        attributes([
+                'Specification-Title'     : "${mod_id}-api",
+                'Specification-Vendor'    : mod_authors,
+                'Specification-Version'   : '1',
+                'Implementation-Title'    : "${project.name}-api",
+                'Implementation-Version'  : project.version,
+                'Implementation-Vendor'   : mod_authors,
+                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}
+
+tasks.register('resourcesJar', Jar) {
+    group = 'build'
+    description = 'Assembles WorldGenRender resources, command docs, MCMod description and Javadocs.'
+    archiveClassifier = 'resources'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    dependsOn tasks.named('javadoc')
+
+    from(sourceSets.main.resources) {
+        into 'resources'
+    }
+    from('src/generated/resources') {
+        into 'generated-resources'
+    }
+    from(tasks.named('javadoc')) {
+        into 'javadoc'
+    }
+    from(['README.txt', 'COMMANDS.md', 'API.md', 'MCMOD_DESCRIPTION.md', 'LICENSE.txt', 'CREDITS.txt', 'changelog.txt']) {
+        into 'docs'
+    }
+    manifest {
+        attributes([
+                'Specification-Title'     : "${mod_id}-resources",
+                'Specification-Vendor'    : mod_authors,
+                'Specification-Version'   : '1',
+                'Implementation-Title'    : "${project.name}-resources",
+                'Implementation-Version'  : project.version,
+                'Implementation-Vendor'   : mod_authors,
+                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}
+
+tasks.named('assemble').configure {
+    dependsOn tasks.named('apiJar')
+    dependsOn tasks.named('resourcesJar')
+}
+
 // Example configuration to allow publishing using the maven-publish plugin
 publishing {
     publications {
         register('mavenJava', MavenPublication) {
             artifact jar
-            artifact tasks.named('sourcesJar')
-            artifact tasks.named('javadocJar')
+            artifact tasks.named('apiJar')
+            artifact tasks.named('resourcesJar')
         }
     }
     repositories {
@@ -224,12 +291,3 @@ tasks.withType(Javadoc).configureEach {
     options.addStringOption('Xdoclint:none', '-quiet')
 }
 
-tasks.named('sourcesJar', Jar).configure {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    from sourceSets.main.allSource
-}
-
-tasks.named('javadocJar', Jar).configure {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    from tasks.named('javadoc')
-}

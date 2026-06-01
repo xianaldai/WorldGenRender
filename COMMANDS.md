@@ -1,5 +1,38 @@
 # WorldGenRender 命令说明
 
+## 构建产物工作流
+
+执行构建命令：
+
+```shell
+gradlew.bat clean build
+```
+
+构建完成后，`build/libs/` 中固定输出三个主要 Jar：
+
+| 文件 | 用途 |
+| ---- | ---- |
+| `worldgenrender-<version>.jar` | **运行 Mod Jar**，放入客户端或服务端 `mods/` 目录使用，包含完整 Mod 代码与必要资源。 |
+| `worldgenrender-<version>-api.jar` | **API Jar**，供其它 Mod 或开发环境以 `compileOnly` 方式依赖，只包含 `cn.xianaldai.worldgenrender.api` 下的公开 API、API 源码和 `API.md`。 |
+| `worldgenrender-<version>-resources.jar` | **资源/文档 Jar**，用于发布和归档，包含资源、生成资源、Javadoc、命令说明、MCMod 介绍、API 文档、许可证和更新日志。 |
+
+GitHub Actions 会在以下情况自动执行同样的构建工作流：
+
+- 推送到 `main` 或 `master` 分支。
+- 向 `main` 或 `master` 提交 Pull Request。
+- 推送 `v*` 标签，例如 `v1.0.0`。
+- 在 GitHub Actions 页面手动点击 `Run workflow`。
+
+工作流文件为 `.github/workflows/build.yml`。每次运行会上传三个 artifact：
+
+| Artifact 名称 | 内容 |
+| ------------- | ---- |
+| `worldgenrender-runtime-mod` | 运行 Mod Jar。 |
+| `worldgenrender-api` | API Jar。 |
+| `worldgenrender-resources` | 资源/文档 Jar。 |
+
+推送 `v*` 标签时，工作流还会把三个 Jar 自动挂到 GitHub Release 资产中。
+
 根命令：
 
 ```mcfunction
