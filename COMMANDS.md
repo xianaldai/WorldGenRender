@@ -20,7 +20,6 @@ GitHub Actions 会在以下情况自动执行同样的构建工作流：
 
 - 推送到 `main` 或 `master` 分支。
 - 向 `main` 或 `master` 提交 Pull Request。
-- 推送 `v*` 标签，例如 `v1.0.0`。
 - 在 GitHub Actions 页面手动点击 `Run workflow`。
 
 工作流文件为 `.github/workflows/build.yml`。每次运行会上传三个 artifact：
@@ -31,7 +30,7 @@ GitHub Actions 会在以下情况自动执行同样的构建工作流：
 | `worldgenrender-api` | API Jar。 |
 | `worldgenrender-resources` | 资源/文档 Jar。 |
 
-推送 `v*` 标签时，工作流还会把三个 Jar 自动挂到 GitHub Release 资产中。
+推送到 `main` 或 `master` 时，工作流会读取 `gradle.properties` 里的 `mod_version`，自动使用 `v<mod_version>` 作为 Release 标签，并把三个 Jar 挂到该 GitHub Release 资产中。例如 `mod_version=1.0.1` 会自动发布 `v1.0.1` Release。为避免重复发同一个版本，如果 GitHub 上已经存在 `v1.0.1` Release，后续仍然会构建并上传 Actions artifact，但会跳过 Release 发布步骤，不会覆盖已有 Release 资产。也就是说，正常发版只需要修改 `mod_version`、提交并推送分支，不需要手动创建 tag；要重新发版则应把 `mod_version` 提升到新的版本号。
 
 根命令：
 

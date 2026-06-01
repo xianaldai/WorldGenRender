@@ -5,12 +5,12 @@ on:
     branches:
       - main
       - master
-    tags:
-      - 'v*'
+      - 1.20.1forge
   pull_request:
     branches:
       - main
       - master
+      - 1.20.1forge
   workflow_dispatch:
 
 permissions:
@@ -34,6 +34,36 @@ jobs:
 
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
+
+      - name: Read mod version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(grep '^mod_version=' gradle.properties | cut -d '=' -f 2 | tr -d '[:space:]')"
+          if [ -z "$version" ]; then
+            echo "mod_version is empty" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+          echo "Release version: $version"
+
+      - name: Check whether release already exists
+        id: release_check
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "${{ steps.version.outputs.tag }}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Release ${{ steps.version.outputs.tag }} already exists; this push will build artifacts only and skip publishing release assets."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Release ${{ steps.version.outputs.tag }} does not exist; this push will publish it after build."
+          fi
 
       - name: Build runtime, API and resources jars
         run: ./gradlew clean build --no-daemon
@@ -106,8 +136,12 @@ jobs:
           if-no-files-found: error
 
       - name: Publish GitHub release assets
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.event_name == 'push' && steps.release_check.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: WorldGenRender ${{ steps.version.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
           files: |
             build/libs/worldgenrender-*.jar

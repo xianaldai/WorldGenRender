@@ -8,7 +8,7 @@
 - `worldgenrender-<version>-api.jar`：开发用 API 文件，供其它 Mod 作为编译依赖，不需要放进普通玩家的 `mods/` 文件夹。
 - `worldgenrender-<version>-resources.jar`：资源/文档归档，包含命令说明、MCMod 介绍、API 文档、Javadoc、许可证和更新日志等资料。
 
-这些文件由 GitHub Actions 自动构建：每次推送到 `main` / `master`、提交 Pull Request、手动运行工作流，都会生成三个 artifact；推送 `v*` 标签时还会自动附加到 GitHub Release 下载页。
+这些文件由 GitHub Actions 自动构建：每次推送到 `main` / `master`、提交 Pull Request、手动运行工作流，都会生成三个 artifact。推送到 `main` / `master` 时，工作流会读取 `gradle.properties` 的 `mod_version`，自动发布对应的 GitHub Release，例如 `mod_version=1.0.1` 会发布 `v1.0.1` 下载页。为避免重复发布，同一个版本的 Release 已存在时，工作流只构建并上传 Actions artifact，会跳过 Release 发布步骤；要重新发版需要提高 `mod_version`。
 
 WorldGenRender 是一个面向 Minecraft Forge 1.20.1 的世界生成辅助与渲染工具 Mod，适合整合包作者、地图作者、服务器管理员和世界生成调试场景使用。它可以在游戏内批量预加载、清理、重生成指定区块，并将指定范围导出为俯视图、正交 3D 图片或 OBJ 模型，方便检查地形、结构、群系、水体和地下区域的生成效果。
 
