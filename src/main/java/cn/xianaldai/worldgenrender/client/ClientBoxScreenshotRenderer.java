@@ -207,7 +207,8 @@ public final class ClientBoxScreenshotRenderer
         PoseStack viewPose = createIsometricViewPose(centerX, centerY, centerZ, orientation);
         OrthoBounds bounds = orthographicBounds(box, viewPose.last().pose(), (float)width / (float)height);
         RenderSelection renderSelection = collectRenderSelection(level, box, null, level.getModelDataManager(), minecraft.getBlockEntityRenderDispatcher(), packet);
-        return new CanvasPlan(width, height, viewPose, bounds, renderSelection, new SelectionClipLevel(level, box));
+        BlockAndTintGetter levelView = packet.cutaway() || packet.playerPerspective() ? new SelectionClipLevel(level, box) : level;
+        return new CanvasPlan(width, height, viewPose, bounds, renderSelection, levelView);
     }
 
     private static PoseStack createIsometricViewPose(double centerX, double centerY, double centerZ, Config.Render3dOrientation orientation)

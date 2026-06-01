@@ -262,6 +262,7 @@ public final class WorldGenRenderCommands
                     player.getEyeY(),
                     player.getZ(),
                     false,
+                    cutaway,
                     orientation.name(),
                     clientFileName));
             source.sendSuccess(() -> Component.literal("已请求客户端按正交捕获画布渲染指定 chunk 范围内方块的 " + (cutaway ? "render3d cutaway" : "render3d") + " PNG；取向 " + orientation.name() + "；输出位于客户端 screenshots/worldgenrender 目录。"), false);
@@ -335,6 +336,7 @@ public final class WorldGenRenderCommands
                     player.getX(),
                     player.getEyeY(),
                     player.getZ(),
+                    true,
                     true,
                     orientation.name(),
                     clientFileName));

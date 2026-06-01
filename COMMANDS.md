@@ -110,7 +110,13 @@
 /worldgenrender render3d orientation se minecraft:overworld -8 -8 8 8 overworld_3d_se.png
 ```
 
-普通模式主要渲染地表可见地形。需要查看地下结构、洞穴、边界切面时使用 `render3d cutaway`。
+普通模式主要渲染地表可见地形。客户端 GPU 路径会使用真实客户端世界作为邻居查询视图，让 Minecraft/Forge 原版方块与流体渲染按真实邻居状态进行遮挡裁剪；因此它不会主动把区块范围边界外当成空气，也不应产生地下剖面效果。需要查看地下结构、洞穴、边界切面时使用 `render3d cutaway`。
+
+模式区别：
+
+- `render3d`：地表/外观模式，适合展示自然地形、建筑外观、水面和地表结构。
+- `render3d cutaway`：地下剖面模式，会把渲染范围外视为空气以暴露边界切面。
+- `render3d box`：玩家两点盒选区模式，也按选区边界做剖切，适合截取建筑局部或地下小范围。
 
 ### 3D 地下剖面 / Cutaway PNG
 

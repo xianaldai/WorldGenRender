@@ -20,6 +20,7 @@ public record ClientBoxRenderRequestPacket(ResourceLocation dimension,
                                            double cameraY,
                                            double cameraZ,
                                            boolean playerPerspective,
+                                           boolean cutaway,
                                            String orientation,
                                            String fileName)
 {
@@ -34,6 +35,7 @@ public record ClientBoxRenderRequestPacket(ResourceLocation dimension,
         buffer.writeDouble(packet.cameraY);
         buffer.writeDouble(packet.cameraZ);
         buffer.writeBoolean(packet.playerPerspective);
+        buffer.writeBoolean(packet.cutaway);
         buffer.writeUtf(packet.orientation == null ? "" : packet.orientation, 16);
         buffer.writeUtf(packet.fileName == null ? "" : packet.fileName, 32767);
     }
@@ -49,6 +51,7 @@ public record ClientBoxRenderRequestPacket(ResourceLocation dimension,
                 buffer.readDouble(),
                 buffer.readDouble(),
                 buffer.readDouble(),
+                buffer.readBoolean(),
                 buffer.readBoolean(),
                 buffer.readUtf(16),
                 buffer.readUtf(32767));
